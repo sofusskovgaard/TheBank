@@ -4,6 +4,8 @@
     <e p="$PROJECT_DIR$" t="IncludeFlat">
       <e p="packages" t="ExcludeRecursive" />
       <e p="TheBank.Core" t="IncludeRecursive">
+        <e p="Account.cs" t="Include" />
+        <e p="Bank.cs" t="Include" />
         <e p="bin" t="ExcludeRecursive" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
