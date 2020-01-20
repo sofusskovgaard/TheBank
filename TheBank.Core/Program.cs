@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Data;
+using System.Linq;
+using ConsoleTableExt;
 
 namespace TheBank.Core
 {
@@ -28,6 +31,7 @@ namespace TheBank.Core
                 Console.WriteLine($"02) Deposit funds");
                 Console.WriteLine($"03) Withdraw funds");
                 Console.WriteLine($"04) Display balance");
+                Console.WriteLine($"05) Display accounts");
                 Console.WriteLine($"00) Exit bank");
 
                 var userInput = Console.ReadLine();
@@ -45,6 +49,9 @@ namespace TheBank.Core
                         break;
                     case "04":
                         DisplayBalance();
+                        break;
+                    case "05":
+                        DisplayAccounts();
                         break;
                     case "00":
                         running = false;
@@ -67,7 +74,7 @@ namespace TheBank.Core
             else
             {
                 var account = _bank.CreateAccount(accountName);
-                Console.WriteLine($"New account for {account.Name}, with a balance of {account.Balance} kr");
+                Console.WriteLine($"New account for {account.Name}, with an id of {account.Id} and a balance of {account.Balance} kr");
             }
             
             Console.Read();
@@ -75,44 +82,136 @@ namespace TheBank.Core
 
         static void DepositFunds()
         {
-            Console.Write("Amount to deposit: ");
-            decimal.TryParse(Console.ReadLine(), out decimal amount);
+            try
+            {
+                var account = _GetUser();
+                
+                Console.Write("Amount to deposit: ");
+                decimal.TryParse(Console.ReadLine(), out decimal amount);
 
-            if (amount == 0)
-            {
-                Console.WriteLine("No deposit was made");
-            }
-            else
-            {
-                _bank.Deposit(amount);
-                Console.WriteLine($"Balance after deposit {_bank.Account.Balance} kr");
-            }
+                if (amount == 0)
+                {
+                    Console.WriteLine("No deposit was made");
+                }
+                else
+                {
+                    _bank.Deposit(account, amount);
+                    Console.WriteLine($"Balance after deposit {account.Balance} kr");
+                }
             
-            Console.Read();
+                Console.Read();
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message != "CancelledAccountSearch")
+                {
+                    throw ex;
+                }
+            }
         }
 
         static void WithdrawFunds()
         {
-            Console.Write("Amount to withdraw: ");
-            decimal.TryParse(Console.ReadLine(), out decimal amount);
-            
-            if (amount == 0)
+            try
             {
-                Console.WriteLine("No withdrawal was made");
+                var account = _GetUser();
+                
+                Console.Write("Amount to withdraw: ");
+                decimal.TryParse(Console.ReadLine(), out decimal amount);
+
+                if (amount == 0)
+                {
+                    Console.WriteLine("No withdrawal was made");
+                }
+                else
+                {
+                    _bank.Withdraw(account, amount);
+                    Console.WriteLine($"Balance after withdrawal {account.Balance} kr");
+                }
+
+                Console.Read();
             }
-            else
+            catch (Exception ex)
             {
-                _bank.Withdraw(amount);
-                Console.WriteLine($"Balance after withdrawal {_bank.Account.Balance} kr");
+                if (ex.Message != "CancelledAccountSearch")
+                {
+                    throw ex;
+                }
             }
-            
-            Console.Read();
         }
 
         static void DisplayBalance()
         {
-            Console.WriteLine($"Balance: {_bank.Account.Balance} kr");
+            try
+            {
+                var account = _GetUser();
+            
+                Console.WriteLine($"Balance: {account.Balance} kr");
+                Console.Read();
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message != "CancelledAccountSearch")
+                {
+                    throw ex;
+                }
+            }
+        }
+
+        static void DisplayAccounts()
+        {
+            Console.Clear();
+            
+            if (_bank.AccountsCount > 0)
+            {
+                Console.WriteLine($"Registered accounts: ({_bank.AccountsCount})");
+                
+                var table = new DataTable();
+
+                table.Columns.Add("ID", typeof(string));
+                table.Columns.Add("Name", typeof(string));
+                table.Columns.Add("Balance", typeof(decimal));
+            
+            
+                _bank.Accounts.ForEach(account =>
+                {
+                    table.Rows.Add(account.Id, account.Name, account.Balance);
+                });
+
+                ConsoleTableBuilder.From(table).ExportAndWriteLine();
+            }
+            else
+            {
+                Console.WriteLine("There are no registered accounts...");
+            }
+
             Console.Read();
         }
+        
+        //#region private methods
+
+        static Account _GetUser()
+        {
+            Console.Write("AccountID: ");
+            var userInput = Console.ReadLine();
+            
+            if (string.IsNullOrEmpty(userInput))
+            {
+                throw new Exception("CancelledAccountSearch");    
+            }
+            
+            var account = _bank.GetAccount(userInput);
+
+            if (account == null)
+            {
+                Console.Clear();
+                Console.WriteLine("That ID doesn't exists");
+                return _GetUser();
+            }
+
+            return account;
+        }
+        
+        // #endregion
     }
 }

@@ -6,11 +6,14 @@ namespace TheBank.Core
     {
         private decimal _balance = 0;
         
-        public Account(string name = "John Doe")
+        public Account(string id, string name = "John Doe")
         {
             Name = name;
             _balance = 0;
+            Id = id;
         }
+        
+        public string Id { get; }
         
         public string Name { get; set; }
 
