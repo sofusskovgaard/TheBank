@@ -10,16 +10,8 @@ namespace TheBank.Core.Models.Accounts
         #region private variables
 
         public override decimal InterestRate => .005M;
-
-        #endregion
-
-        #region public overides
-
-        public override decimal ChargeInterest()
-        {
-            Balance += Balance * InterestRate;
-            return Balance;
-        }
+        
+        public override decimal NegativeCeiling => -2500M;
 
         #endregion
     }

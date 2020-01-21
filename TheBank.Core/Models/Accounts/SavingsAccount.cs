@@ -11,16 +11,8 @@ namespace TheBank.Core.Models.Accounts
 
         public override decimal InterestRate => Balance < 50000 ? .01M : (Balance >= 50000 && Balance <= 100000 ? .02M : .03M);
         
-        #endregion
-
-        #region public overides
-
-        public override decimal ChargeInterest()
-        {
-            Balance += Balance * InterestRate;
-            return Balance;
-        }
-
+        public override decimal NegativeCeiling => 0M;
+        
         #endregion
     }
 }

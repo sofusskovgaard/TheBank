@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Data;
-using System.Linq;
 using ConsoleTableExt;
-
 using TheBank.Core.Models.Accounts;
 using TheBank.Core.BusinessLogicLayer.Bank;
+using TheBank.Core.Models.Exceptions;
 
 namespace TheBank.Core
 {
@@ -131,9 +130,16 @@ namespace TheBank.Core
             }
             catch (Exception ex)
             {
-                if (ex.Message != "CancelledAccountSearch")
+                if (ex.Message != "CancelledAccountSearch" && !(ex is OverdraftException))
                 {
                     throw ex;
+                }
+
+                if (ex is OverdraftException)
+                {
+                    Console.Clear();
+                    Console.WriteLine(ex.Message);
+                    Console.ReadKey();
                 }
             }
         }
@@ -162,9 +168,16 @@ namespace TheBank.Core
             }
             catch (Exception ex)
             {
-                if (ex.Message != "CancelledAccountSearch")
+                if (ex.Message != "CancelledAccountSearch" && !(ex is OverdraftException))
                 {
                     throw ex;
+                }
+
+                if (ex is OverdraftException)
+                {
+                    Console.Clear();
+                    Console.WriteLine(ex.Message);
+                    Console.ReadKey();
                 }
             }
         }

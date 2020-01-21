@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using TheBank.Core.Models.Accounts;
+using TheBank.Core.Models.Exceptions;
 
 namespace TheBank.Core.BusinessLogicLayer.Bank
 {

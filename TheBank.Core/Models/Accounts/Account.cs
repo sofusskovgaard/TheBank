@@ -1,4 +1,5 @@
 using System;
+using TheBank.Core.Models.Exceptions;
 
 namespace TheBank.Core.Models.Accounts
 {
@@ -28,12 +29,48 @@ namespace TheBank.Core.Models.Accounts
         public decimal Balance
         {
             get => Math.Round(_balance, 2);
-            set => _balance = value;
+            set
+            {
+                if (value < 0 && _balance > 0 && value > NegativeCeiling)
+                {
+                    _balance = value;
+                    throw new OverdraftException($"You've overdrafted and you're now in a debt of {Math.Round(value, 2):0.00} kr");
+                }
+                
+                if (value < 0 && _balance < 0 && value < _balance && value > NegativeCeiling)
+                {
+                    _balance = value;
+                    throw new OverdraftException($"You've overdrafted again and you're now in a debt of {Math.Round(value, 2):0.00} kr");
+                } 
+                
+                if (value < 0 && _balance < 0 && value > _balance && value > NegativeCeiling)
+                {
+                    _balance = value;
+                    throw new OverdraftException($"You're paying off your debt, but you're still in a debt of {Math.Round(value, 2):0.00} kr");
+                }
+
+                if (value < NegativeCeiling)
+                {
+                    if (_balance > 0)
+                    {
+                        throw new OverdraftException($"You've reached your overdraft ceiling of {NegativeCeiling:0.00} kr. Your balance is {Math.Round(_balance, 2):0.00} kr");
+                    }
+                    throw new OverdraftException($"You've reached your overdraft ceiling of {NegativeCeiling:0.00} kr. You're currently in a debt of {Math.Round(_balance, 2):0.00} kr");
+                }
+
+                _balance = value;
+            }
         }
 
         // Abstract variables/methods
         public abstract decimal InterestRate { get; }
+        
+        public abstract decimal NegativeCeiling { get; }
 
-        public abstract decimal ChargeInterest();
+        public decimal ChargeInterest()
+        {
+            _balance += _balance * InterestRate;
+            return _balance;
+        }
     }
 }
