@@ -4,6 +4,7 @@ using System.Linq;
 
 using TheBank.Core.Models.Accounts;
 using TheBank.Core.Models.Exceptions;
+using TheBank.Core.Utilities;
 
 namespace TheBank.Core.BusinessLogicLayer.Bank
 {
@@ -31,14 +32,17 @@ namespace TheBank.Core.BusinessLogicLayer.Bank
                 case AccountType.ConsumerAccount:
                     var newConsumberAccount = new ConsumerAccount(_lastId.ToString(), name);
                     Accounts.Add(newConsumberAccount);
+                    LoggerService.Write($"[NEW_ACCOUNT] NEW CONSUMER ACCOUNT, ID = {newConsumberAccount.Id}");
                     return newConsumberAccount;
                 case AccountType.CheckingAccount:
                     var newCheckingAccount = new CheckingAccount(_lastId.ToString(), name);
                     Accounts.Add(newCheckingAccount);
+                    LoggerService.Write($"[NEW_ACCOUNT] NEW CHECKING ACCOUNT, ID = {newCheckingAccount.Id}");
                     return newCheckingAccount;
                 case AccountType.SavingsAccount:
                     var newSavingsAccount = new SavingsAccount(_lastId.ToString(), name);
                     Accounts.Add(newSavingsAccount);
+                    LoggerService.Write($"[NEW_ACCOUNT] NEW SAVINGS ACCOUNT, ID = {newSavingsAccount.Id}");
                     return newSavingsAccount;
                 default:
                     throw new Exception("MissingAccountType");
@@ -49,18 +53,34 @@ namespace TheBank.Core.BusinessLogicLayer.Bank
         public decimal Deposit(Account account, decimal amount)
         {
             account.Balance += amount;
+            LoggerService.Write($"[DEPOSIT] DEPOSIT OF {amount} INTO ACCOUNT => {account.Id}");
             return account.Balance;
         }
 
         public decimal Withdraw(Account account, decimal amount)
         {
             account.Balance -= amount;
+            LoggerService.Write($"[WITHDRAWAL] WITHDRAWAL OF {amount} FROM ACCOUNT => {account.Id}");
             return account.Balance;
         }
 
-        public decimal Balance(Account account) => account.Balance;
+        public decimal Balance(Account account)
+        {
+            LoggerService.Write($"[BALANCE] SHOW BALANCE OF ACCOUNT => {account.Id}");
+            return account.Balance;
+        }
 
-        public Account GetAccount(string id) => Accounts.FirstOrDefault(account => account.Id == id);
+        public Account GetAccount(string id)
+        {
+            var account = Accounts.FirstOrDefault(a => a.Id == id);
+            
+            if (account != null)
+            {
+                LoggerService.Write($"[ACCOUNT] GET ACCOUNT => {account.Id}");
+            }
+
+            return account;
+        }
     }
 
     public interface IBank

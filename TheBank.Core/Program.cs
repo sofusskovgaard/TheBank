@@ -1,20 +1,23 @@
 ﻿using System;
 using System.Data;
+
 using ConsoleTableExt;
+
 using TheBank.Core.Models.Accounts;
 using TheBank.Core.BusinessLogicLayer.Bank;
 using TheBank.Core.Models.Exceptions;
+using TheBank.Core.Utilities;
 
 namespace TheBank.Core
 {
     class Program
     {
         private static Bank _bank;
-        
+
         static void Main(string[] args)
         {
             _bank = new Bank() { BankName = "Skovgaard's Bank'"};
-            
+
             Menu();
         }
         
@@ -35,6 +38,7 @@ namespace TheBank.Core
                 Console.WriteLine($"4) Display balance");
                 Console.WriteLine($"5) Display accounts");
                 Console.WriteLine($"6) Charge interests");
+                Console.WriteLine($"7) Display Logs");
                 Console.WriteLine($"0) Exit bank");
 
                 var userInput = Console.ReadKey();
@@ -59,6 +63,9 @@ namespace TheBank.Core
                         break;
                     case ConsoleKey.D6:
                         ChargeInterests();
+                        break;
+                    case ConsoleKey.D7:
+                        DisplayLogs();
                         break;
                     case ConsoleKey.D0:
                         running = false;
@@ -262,6 +269,14 @@ namespace TheBank.Core
             }
 
             Console.Read();
+        }
+
+        static void DisplayLogs()
+        {
+            var logs = LoggerService.Read();
+            Console.WriteLine("Logs: ");
+            logs.ForEach(log => Console.WriteLine(log));
+            Console.ReadKey();
         }
         
         //#region private methods

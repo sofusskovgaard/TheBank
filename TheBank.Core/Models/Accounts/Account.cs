@@ -1,5 +1,6 @@
 using System;
 using TheBank.Core.Models.Exceptions;
+using TheBank.Core.Utilities;
 
 namespace TheBank.Core.Models.Accounts
 {
@@ -69,7 +70,9 @@ namespace TheBank.Core.Models.Accounts
 
         public decimal ChargeInterest()
         {
+            var oldBalance = _balance;
             _balance += _balance * InterestRate;
+            LoggerService.Write($"[INTERESTS][BALANCE: {oldBalance} => {_balance}] CHARGE INTEREST FROM ACCOUNT => {Id}");
             return _balance;
         }
     }
