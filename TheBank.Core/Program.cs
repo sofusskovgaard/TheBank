@@ -3,6 +3,9 @@ using System.Data;
 using System.Linq;
 using ConsoleTableExt;
 
+using TheBank.Core.Models.Accounts;
+using TheBank.Core.BusinessLogicLayer.Bank;
+
 namespace TheBank.Core
 {
     class Program
@@ -189,7 +192,7 @@ namespace TheBank.Core
                     table.Rows.Add(account.Id, $"{oldBalance} kr", $"{newBalance} kr", $"{oldBalance - newBalance} kr", $"{account.InterestRate * 100} %");
                 });
 
-                ConsoleTableBuilder.From(table).ExportAndWriteLine();
+                ConsoleTableBuilder.From(table).WithFormat(ConsoleTableBuilderFormat.Minimal).ExportAndWriteLine();
             }
             else
             {
@@ -238,7 +241,7 @@ namespace TheBank.Core
                     table.Rows.Add(account.Id, account.Name, $"{account.Balance} kr", account.Type.ToString());
                 });
 
-                ConsoleTableBuilder.From(table).ExportAndWriteLine();
+                ConsoleTableBuilder.From(table).WithFormat(ConsoleTableBuilderFormat.Minimal).ExportAndWriteLine();
             }
             else
             {

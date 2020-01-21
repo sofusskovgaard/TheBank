@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TheBank.Core
+using TheBank.Core.Models.Accounts;
+
+namespace TheBank.Core.BusinessLogicLayer.Bank
 {
-    public class Bank
+    public class Bank : IBank
     {
         private int _lastId = 0;
 
@@ -55,11 +57,27 @@ namespace TheBank.Core
             return account.Balance;
         }
 
-        public decimal Balance(Account account)
-        {
-            return account.Balance;
-        }
+        public decimal Balance(Account account) => account.Balance;
 
         public Account GetAccount(string id) => Accounts.FirstOrDefault(account => account.Id == id);
+    }
+
+    public interface IBank
+    {
+        List<Account> Accounts { get; }
+        
+        int AccountsCount { get; }
+        
+        string BankName { get; set; }
+
+        Account CreateAccount(string name, AccountType type);
+
+        decimal Deposit(Account account, decimal amount);
+
+        decimal Withdraw(Account account, decimal amount);
+
+        decimal Balance(Account account);
+
+        Account GetAccount(string id);
     }
 }
