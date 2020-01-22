@@ -4,7 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-namespace TheBank.Core.Utilities
+namespace TheBank.Services
 {
     public static class LoggerService
     {

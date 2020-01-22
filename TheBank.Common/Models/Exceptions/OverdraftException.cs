@@ -1,6 +1,6 @@
 using System;
 
-namespace TheBank.Core.Models.Exceptions
+namespace TheBank.Common.Models.Exceptions
 {
     public class OverdraftException : Exception
     {

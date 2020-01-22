@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using TheBank.Core.Models.Accounts;
-using TheBank.Core.Utilities;
+using TheBank.Common.Models.Accounts;
+using TheBank.Services;
 
-namespace TheBank.Core.DataAccessLayer
+namespace TheBank.DataAccessLayer
 {
     public class FileRepository : IFileRepository
     {

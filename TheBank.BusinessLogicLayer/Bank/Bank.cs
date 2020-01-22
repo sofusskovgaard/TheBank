@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TheBank.Core.DataAccessLayer;
-using TheBank.Core.Models.Accounts;
-using TheBank.Core.Models.Exceptions;
-using TheBank.Core.Utilities;
+using TheBank.DataAccessLayer;
+using TheBank.Common.Models.Accounts;
+using TheBank.Services;
 
-namespace TheBank.Core.BusinessLogicLayer.Bank
+namespace TheBank.BusinessLogicLayer.Bank
 {
     public class Bank : IBank
     {

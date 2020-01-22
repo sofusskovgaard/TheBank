@@ -1,8 +1,8 @@
 using System;
-using TheBank.Core.Models.Exceptions;
-using TheBank.Core.Utilities;
+using TheBank.Common.Models.Exceptions;
+using TheBank.Services;
 
-namespace TheBank.Core.Models.Accounts
+namespace TheBank.Common.Models.Accounts
 {
     public enum AccountType
     {

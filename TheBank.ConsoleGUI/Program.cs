@@ -4,13 +4,12 @@ using System.Data;
 
 using ConsoleTableExt;
 
-using TheBank.Core.Models.Accounts;
-using TheBank.Core.BusinessLogicLayer.Bank;
-using TheBank.Core.DataAccessLayer;
-using TheBank.Core.Models.Exceptions;
-using TheBank.Core.Utilities;
+using TheBank.Common.Models.Accounts;
+using TheBank.BusinessLogicLayer.Bank;
+using TheBank.Common.Models.Exceptions;
+using TheBank.Services;
 
-namespace TheBank.Core
+namespace TheBank.ConsoleGUI
 {
     class Program
     {

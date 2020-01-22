@@ -1,6 +1,6 @@
 using System;
 
-namespace TheBank.Core.Models.Accounts
+namespace TheBank.Common.Models.Accounts
 {
     public class ConsumerAccount : Account
     {
