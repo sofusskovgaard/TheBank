@@ -1,10 +1,21 @@
+using System;
+
 namespace TheBank.Core.Models.Accounts
 {
     public class SavingsAccount : Account
     {
-        public SavingsAccount(string id, string name) : base(id, name)
+        public SavingsAccount(string name)
         {
-            this.Type = AccountType.SavingsAccount;
+            Id = Guid.NewGuid().ToString().Substring(0, 6);
+            Name = name;
+            Type = AccountType.SavingsAccount;
+        }
+        
+        public SavingsAccount(string id, string name)
+        {
+            Id = id;
+            Name = name;
+            Type = AccountType.SavingsAccount;
         }
         
         #region private variables

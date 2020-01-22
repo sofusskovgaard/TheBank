@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 
 using ConsoleTableExt;
 
 using TheBank.Core.Models.Accounts;
 using TheBank.Core.BusinessLogicLayer.Bank;
+using TheBank.Core.DataAccessLayer;
 using TheBank.Core.Models.Exceptions;
 using TheBank.Core.Utilities;
 
@@ -16,7 +18,7 @@ namespace TheBank.Core
 
         static void Main(string[] args)
         {
-            _bank = new Bank() { BankName = "Skovgaard's Bank'"};
+            _bank = new Bank() { Name = "Bank2000"};
 
             Menu();
         }
@@ -29,7 +31,7 @@ namespace TheBank.Core
             {
                 Console.Clear(); // Clear screen for the menu
                 
-                Console.WriteLine($"Velkommen til {_bank.BankName} - Bank 2");
+                Console.WriteLine($"Welcome to {_bank.Name}");
                 Console.WriteLine("----------------------------------------");
 
                 Console.WriteLine($"1) Create account");
@@ -207,7 +209,7 @@ namespace TheBank.Core
                 _bank.Accounts.ForEach(account =>
                 {
                     var oldBalance = account.Balance;
-                    account.ChargeInterest();
+                    _bank.ChargeInterest(account);
                     var newBalance = account.Balance;
                     table.Rows.Add(account.Id, $"{oldBalance} kr", $"{newBalance} kr", $"{oldBalance - newBalance} kr", $"{account.InterestRate * 100} %");
                 });

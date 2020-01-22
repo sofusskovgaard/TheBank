@@ -15,9 +15,9 @@ namespace TheBank.Core.Models.Accounts
     {
         private decimal _balance = 0;
         
-        protected Account(string id, string name = "John Doe")
+        protected Account(string id = null, string name = "John Doe")
         {
-            Id = id;
+            Id = id ?? Guid.NewGuid().ToString().Substring(0, 6);
             Name = name;
         }
         

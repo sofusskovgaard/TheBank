@@ -1,10 +1,21 @@
+using System;
+
 namespace TheBank.Core.Models.Accounts
 {
     public class ConsumerAccount : Account
     {
-        public ConsumerAccount(string id, string name) : base(id, name)
+        
+        public ConsumerAccount(string name)
         {
-            this.Type = AccountType.ConsumerAccount;
+            Id = Guid.NewGuid().ToString().Substring(0, 6);
+            Name = name;
+            Type = AccountType.ConsumerAccount;
+        }
+        public ConsumerAccount(string id, string name)
+        {
+            Id = id;
+            Name = name;
+            Type = AccountType.ConsumerAccount;
         }
 
         #region private variables
