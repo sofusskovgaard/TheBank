@@ -12,7 +12,7 @@ namespace TheBank.Services
         {
             if (!File.Exists(FullFilePath))
             {
-                File.CreateText(FullFilePath);
+                File.CreateText(FullFilePath).Dispose();
             }
         }
 
