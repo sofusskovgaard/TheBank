@@ -25,7 +25,6 @@ namespace TheBank.ConsoleGUI
         static void Menu()
         {
             bool running = true;
-
             do
             {
                 Console.Clear(); // Clear screen for the menu
@@ -36,11 +35,13 @@ namespace TheBank.ConsoleGUI
                 Console.WriteLine($"1) Create account");
                 Console.WriteLine($"2) Deposit funds");
                 Console.WriteLine($"3) Withdraw funds");
-                Console.WriteLine($"4) Display balance");
-                Console.WriteLine($"5) Display accounts");
-                Console.WriteLine($"6) Charge interests");
-                Console.WriteLine($"7) Display Logs");
-                Console.WriteLine($"0) Exit bank");
+                Console.WriteLine($"4) Transact funds");
+                Console.WriteLine($"5) Display balance");
+                Console.WriteLine($"6) Display accounts");
+                Console.WriteLine($"7) Display transactions");
+                Console.WriteLine($"8) Display logs");
+                Console.WriteLine($"9) Charge interests");
+                Console.WriteLine($"0) Exit");
 
                 var userInput = Console.ReadKey();
                 Console.Clear();
@@ -57,16 +58,22 @@ namespace TheBank.ConsoleGUI
                         WithdrawFunds();
                         break;
                     case ConsoleKey.D4:
-                        DisplayBalance();
+                        TransactFunds();
                         break;
                     case ConsoleKey.D5:
-                        DisplayAccounts();
+                        DisplayBalance();
                         break;
                     case ConsoleKey.D6:
-                        ChargeInterests();
+                        DisplayAccounts();
                         break;
                     case ConsoleKey.D7:
+                        DisplayTransactions();
+                        break;
+                    case ConsoleKey.D8:
                         DisplayLogs();
+                        break;
+                    case ConsoleKey.D9:
+                        ChargeInterests();
                         break;
                     case ConsoleKey.D0:
                         running = false;
@@ -190,6 +197,48 @@ namespace TheBank.ConsoleGUI
             }
         }
 
+        static void TransactFunds()
+        {
+            try
+            {
+                Console.WriteLine("Sender account");
+                var sender = _GetUser();
+                
+                Console.WriteLine("Reciever account");
+                var reciever = _GetUser();
+                
+                Console.Write("Amount to transact: ");
+                decimal.TryParse(Console.ReadLine(), out decimal amount);
+                Console.Clear();
+
+                if (amount == 0)
+                {
+                    Console.WriteLine("No withdrawal was made");
+                }
+                else
+                {
+                    _bank.Transact(sender, reciever, amount);
+                    Console.WriteLine($"Balance after transaction {sender.Balance:0.00} kr");
+                }
+
+                Console.Read();
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message != "CancelledAccountSearch" && !(ex is OverdraftException))
+                {
+                    throw ex;
+                }
+
+                if (ex is OverdraftException)
+                {
+                    Console.Clear();
+                    Console.WriteLine(ex.Message);
+                    Console.ReadKey();
+                }
+            }
+        }
+
         static void ChargeInterests()
         {
             if (_bank.AccountsCount > 0)
@@ -278,6 +327,37 @@ namespace TheBank.ConsoleGUI
             Console.WriteLine("Logs: ");
             logs.ForEach(log => Console.WriteLine(log));
             Console.ReadKey();
+        }
+
+        static void DisplayTransactions()
+        {
+            Console.Clear();
+            
+            if (_bank.TransactionsCount > 0)
+            {
+                Console.WriteLine($"Registered transactions: ({_bank.TransactionsCount})");
+                
+                var table = new DataTable();
+
+                table.Columns.Add("ID", typeof(string));
+                table.Columns.Add("Sender", typeof(string));
+                table.Columns.Add("Reciever", typeof(string));
+                table.Columns.Add("Amount", typeof(string));
+            
+            
+                _bank.Transactions.ForEach(transaction =>
+                {
+                    table.Rows.Add(transaction.Id.Substring(0, 12), transaction.Sender?.Id ?? "null", transaction.Reciever?.Id ?? "null", transaction.Amount.ToString("0.00"));
+                });
+
+                ConsoleTableBuilder.From(table).WithFormat(ConsoleTableBuilderFormat.Minimal).ExportAndWriteLine();
+            }
+            else
+            {
+                Console.WriteLine("There are no registered transactions...");
+            }
+
+            Console.Read();
         }
         
         //#region private methods

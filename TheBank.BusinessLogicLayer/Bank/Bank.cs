@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TheBank.DataAccessLayer;
 using TheBank.Common.Models.Accounts;
+using TheBank.Common.Models.Transaction;
 using TheBank.Services;
 
 namespace TheBank.BusinessLogicLayer.Bank
@@ -13,14 +14,13 @@ namespace TheBank.BusinessLogicLayer.Bank
         
         private int _lastId = 0;
 
-        public Bank()
-        {
-
-        }
-        
         public List<Account> Accounts => _fileRepository.Accounts;
 
+        public List<Transaction> Transactions => _fileRepository.Transactions;
+
         public int AccountsCount => Accounts.Count;
+
+        public int TransactionsCount => Transactions.Count;
         
         public string Name { get; set; }
 
@@ -31,20 +31,17 @@ namespace TheBank.BusinessLogicLayer.Bank
             switch (accountType)
             {
                 case AccountType.ConsumerAccount:
-                    var newConsumberAccount = new ConsumerAccount(name) { Balance = balance};
-                    Accounts.Add(newConsumberAccount);
-                    _fileRepository.AddRow(newConsumberAccount);
-                    LoggerService.Write($"[NEW_ACCOUNT] NEW CONSUMER ACCOUNT, ID = {newConsumberAccount.Id}");
-                    return newConsumberAccount;
+                    var newConsumerAccount = new ConsumerAccount(name) { Balance = balance};
+                    _fileRepository.AddRow(newConsumerAccount);
+                    LoggerService.Write($"[NEW_ACCOUNT] NEW CONSUMER ACCOUNT, ID = {newConsumerAccount.Id}");
+                    return newConsumerAccount;
                 case AccountType.CheckingAccount:
                     var newCheckingAccount = new CheckingAccount(name) { Balance = balance};
-                    Accounts.Add(newCheckingAccount);
                     _fileRepository.AddRow(newCheckingAccount);
                     LoggerService.Write($"[NEW_ACCOUNT] NEW CHECKING ACCOUNT, ID = {newCheckingAccount.Id}");
                     return newCheckingAccount;
                 case AccountType.SavingsAccount:
                     var newSavingsAccount = new SavingsAccount(name) { Balance = balance};
-                    Accounts.Add(newSavingsAccount);
                     _fileRepository.AddRow(newSavingsAccount);
                     LoggerService.Write($"[NEW_ACCOUNT] NEW SAVINGS ACCOUNT, ID = {newSavingsAccount.Id}");
                     return newSavingsAccount;
@@ -59,6 +56,7 @@ namespace TheBank.BusinessLogicLayer.Bank
             account.Balance += amount;
             LoggerService.Write($"[DEPOSIT] DEPOSIT OF {amount} INTO ACCOUNT => {account.Id}");
             _fileRepository.UpdateRow(account);
+            _fileRepository.AddRow(new Transaction() { Id = Guid.NewGuid().ToString(), Reciever = account, Amount = amount });
             return account.Balance;
         }
 
@@ -67,7 +65,19 @@ namespace TheBank.BusinessLogicLayer.Bank
             account.Balance -= amount;
             LoggerService.Write($"[WITHDRAWAL] WITHDRAWAL OF {amount} FROM ACCOUNT => {account.Id}");
             _fileRepository.UpdateRow(account);
+            _fileRepository.AddRow(new Transaction() { Id = Guid.NewGuid().ToString(), Sender = account, Amount = amount });
             return account.Balance;
+        }
+
+        public decimal Transact(Account sender, Account reciever, decimal amount)
+        {
+            sender.Balance -= amount;
+            reciever.Balance += amount;
+            LoggerService.Write($"[TRANSACTION] TRANSACTION OF {amount} FROM {sender.Id} TO {reciever.Id}");
+            _fileRepository.UpdateRow(sender);
+            _fileRepository.UpdateRow(reciever);
+            _fileRepository.AddRow(new Transaction() { Id = Guid.NewGuid().ToString(), Sender = sender, Reciever = reciever, Amount = amount });
+            return sender.Balance;
         }
 
         public decimal Balance(Account account)
@@ -78,8 +88,9 @@ namespace TheBank.BusinessLogicLayer.Bank
 
         public void ChargeInterest(Account account)
         {
-            account.ChargeInterest();
+            var interest = account.ChargeInterest();
             _fileRepository.UpdateRow(account);
+            _fileRepository.AddRow(new Transaction() { Id = Guid.NewGuid().ToString(), Reciever = account, Amount = interest });
         }
 
         public Account GetAccount(string id)

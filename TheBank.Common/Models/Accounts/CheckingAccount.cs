@@ -20,6 +20,8 @@ namespace TheBank.Common.Models.Accounts
         
         #region private variables
 
+        public override decimal TransactionFee => .001M;
+
         public override decimal InterestRate => .005M;
         
         public override decimal NegativeCeiling => -2500M;

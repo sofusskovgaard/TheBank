@@ -64,6 +64,8 @@ namespace TheBank.Common.Models.Accounts
         }
 
         // Abstract variables/methods
+        public abstract decimal TransactionFee { get; }
+        
         public abstract decimal InterestRate { get; }
         
         public abstract decimal NegativeCeiling { get; }
@@ -71,9 +73,11 @@ namespace TheBank.Common.Models.Accounts
         public decimal ChargeInterest()
         {
             var oldBalance = _balance;
-            _balance += _balance * InterestRate;
+            var interest = _balance * InterestRate;
+            
+            _balance += interest;
             LoggerService.Write($"[INTERESTS][BALANCE: {oldBalance} => {_balance}] CHARGE INTEREST FROM ACCOUNT => {Id}");
-            return _balance;
+            return interest;
         }
     }
 }

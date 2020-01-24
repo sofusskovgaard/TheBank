@@ -19,6 +19,8 @@ namespace TheBank.Common.Models.Accounts
         }
         
         #region private variables
+        
+        public override decimal TransactionFee => .00125M;
 
         public override decimal InterestRate => Balance < 50000 ? .01M : (Balance >= 50000 && Balance <= 100000 ? .02M : .03M);
         
