@@ -6,9 +6,10 @@ namespace TheBank.Common.Models.Accounts
     {
         public CheckingAccount(string name)
         {
-            Id = Guid.NewGuid().ToString().Substring(0, 6);
+            Id = Guid.NewGuid().ToString();
             Name = name;
             Type = AccountType.CheckingAccount;
+            Balance += 500;
         }
         
         public CheckingAccount(string id, string name)
@@ -16,6 +17,7 @@ namespace TheBank.Common.Models.Accounts
             Id = id;
             Name = name;
             Type = AccountType.CheckingAccount;
+            Balance += 500;
         }
         
         #region private variables

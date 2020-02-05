@@ -7,15 +7,17 @@ namespace TheBank.Common.Models.Accounts
         
         public ConsumerAccount(string name)
         {
-            Id = Guid.NewGuid().ToString().Substring(0, 6);
+            Id = Guid.NewGuid().ToString();
             Name = name;
             Type = AccountType.ConsumerAccount;
+            Balance += 500;
         }
         public ConsumerAccount(string id, string name)
         {
             Id = id;
             Name = name;
             Type = AccountType.ConsumerAccount;
+            Balance += 500;
         }
 
         #region private variables

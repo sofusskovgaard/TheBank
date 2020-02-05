@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-
+using System.Diagnostics;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using ConsoleTableExt;
 
 using TheBank.Common.Models.Accounts;
@@ -22,6 +26,9 @@ namespace TheBank.ConsoleGUI
             Menu();
         }
         
+        /// <summary>
+        /// Initiate user interactive menu.
+        /// </summary>
         static void Menu()
         {
             bool running = true;
@@ -30,7 +37,7 @@ namespace TheBank.ConsoleGUI
                 Console.Clear(); // Clear screen for the menu
                 
                 Console.WriteLine($"Welcome to {_bank.Name}");
-                Console.WriteLine("----------------------------------------");
+                Console.WriteLine("-----------------------");
 
                 Console.WriteLine($"1) Create account");
                 Console.WriteLine($"2) Deposit funds");
@@ -49,19 +56,19 @@ namespace TheBank.ConsoleGUI
                 switch (userInput.Key)
                 {
                     case ConsoleKey.D1:
-                        CreateAccount();
+                        CreateAccount().Wait();
                         break;
                     case ConsoleKey.D2:
-                        DepositFunds();
+                        DepositFunds().Wait();
                         break;
                     case ConsoleKey.D3:
-                        WithdrawFunds();
+                        WithdrawFunds().Wait();
                         break;
                     case ConsoleKey.D4:
-                        TransactFunds();
+                        TransactFunds().Wait();
                         break;
                     case ConsoleKey.D5:
-                        DisplayBalance();
+                        DisplayBalance().Wait();
                         break;
                     case ConsoleKey.D6:
                         DisplayAccounts();
@@ -84,51 +91,75 @@ namespace TheBank.ConsoleGUI
             } while (running);
         }
 
-        static void CreateAccount()
+        /// <summary>
+        /// Initiate account creation process.
+        /// </summary>
+        static async Task CreateAccount()
         {
             Console.Write("New account name: ");
             var accountName = Console.ReadLine();
             Console.Clear();
 
-            if (string.IsNullOrEmpty(accountName))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(accountName)) return;
 
-            Console.WriteLine("New account type: (1)Consumer Account, (2)Checking Account, (3)Savings Account");
+            Console.WriteLine("1) Consumer Account");
+            Console.WriteLine("2) Checking Account");
+            Console.WriteLine("3) Saving Account");
+            Console.Write("New account type:");
             var accountType = Console.ReadKey();
+            
             Console.Clear();
 
-            if (accountType.Key == ConsoleKey.D1 || accountType.Key == ConsoleKey.D2 || accountType.Key == ConsoleKey.D3)
+            switch (accountType.Key)
             {
-                switch (accountType.Key)
-                {
-                    case ConsoleKey.D1:
-                        var consumerAccount = _bank.CreateAccount(accountName, AccountType.ConsumerAccount);
-                        Console.WriteLine($"New consumer account for {consumerAccount.Name}, with an id of {consumerAccount.Id} and a balance of {consumerAccount.Balance} kr");
-                        break;
-                    case ConsoleKey.D2:
-                        var checkingAccount = _bank.CreateAccount(accountName, AccountType.CheckingAccount);
-                        Console.WriteLine($"New checking account for {checkingAccount.Name}, with an id of {checkingAccount.Id} and a balance of {checkingAccount.Balance} kr");
-                        break;
-                    case ConsoleKey.D3:
-                        var savingsAccount = _bank.CreateAccount(accountName, AccountType.SavingsAccount);
-                        Console.WriteLine($"New savings account for {savingsAccount.Name}, with an id of {savingsAccount.Id} and a balance of {savingsAccount.Balance} kr");
-                        break;
-                }
+                case ConsoleKey.D1:
+                    var consumerAccount = await _bank.CreateAccount(accountName, AccountType.ConsumerAccount);
+
+                    Console.WriteLine("New consumer account:");
+                    Console.WriteLine("---------------------");
+                    Console.WriteLine($"Account ID:\t{consumerAccount.Id}");
+                    Console.WriteLine($"Account Name:\t{consumerAccount.Name}");
+                    break;
+                
+                case ConsoleKey.D2:
+                    var checkingAccount = await _bank.CreateAccount(accountName, AccountType.CheckingAccount);
+
+                    Console.WriteLine("New checking account:");
+                    Console.WriteLine("---------------------");
+                    Console.WriteLine($"Account ID:\t{checkingAccount.Id}");
+                    Console.WriteLine($"Account Name:\t{checkingAccount.Name}");
+                    break;
+                
+                case ConsoleKey.D3:
+                    var savingsAccount = await _bank.CreateAccount(accountName, AccountType.SavingsAccount);
+
+                    Console.WriteLine("New savings account:");
+                    Console.WriteLine("---------------------");
+                    Console.WriteLine($"Account ID:\t{savingsAccount.Id}");
+                    Console.WriteLine($"Account Name:\t{savingsAccount.Name}");
+                    break;
+                
+                default: return;
             }
 
-            Console.Read();
+            Console.ReadKey();
         }
 
-        static void DepositFunds()
+        /// <summary>
+        /// Initiate deposit of funds
+        /// </summary>
+        /// <returns>Task</returns>
+        static async Task DepositFunds()
         {
             try
             {
-                var account = _GetUser();
-                
+                var account = await _GetUser();
+
+                Console.Clear();
+
                 Console.Write("Amount to deposit: ");
                 decimal.TryParse(Console.ReadLine(), out decimal amount);
+
                 Console.Clear();
 
                 if (amount == 0)
@@ -137,36 +168,44 @@ namespace TheBank.ConsoleGUI
                 }
                 else
                 {
-                    _bank.Deposit(account, amount);
-                    Console.WriteLine($"Balance after deposit {account.Balance} kr");
-                }
-            
-                Console.Read();
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message != "CancelledAccountSearch" && !(ex is OverdraftException))
-                {
-                    throw ex;
+                    var deposit = _bank.Deposit(account, amount);
+
+                    _loading(deposit);
+
+                    Console.Clear();
+
+                    Console.WriteLine(deposit.IsFaulted
+                        ? "Can't do that here bud"
+                        : $"Balance after deposit {account.Balance} kr");
                 }
 
-                if (ex is OverdraftException)
-                {
-                    Console.Clear();
-                    Console.WriteLine(ex.Message);
-                    Console.ReadKey();
-                }
+                Console.Read();
+            }
+            catch (OverdraftException ex)
+            {
+                Console.Clear();
+                Console.WriteLine(ex.Message);
+                Console.ReadKey();
+            }
+            catch (CancelledAccountSearchException ex)
+            {
+                return;
             }
         }
 
-        static void WithdrawFunds()
+        /// <summary>
+        /// Initiate withdrawal of funds
+        /// </summary>
+        /// <returns>Task</returns>
+        static async Task WithdrawFunds()
         {
             try
             {
-                var account = _GetUser();
+                var account = await _GetUser();
                 
                 Console.Write("Amount to withdraw: ");
                 decimal.TryParse(Console.ReadLine(), out decimal amount);
+
                 Console.Clear();
 
                 if (amount == 0)
@@ -175,40 +214,49 @@ namespace TheBank.ConsoleGUI
                 }
                 else
                 {
-                    _bank.Withdraw(account, amount);
-                    Console.WriteLine($"Balance after withdrawal {account.Balance} kr");
+                    var withdraw = _bank.Withdraw(account, amount);
+
+                    _loading(withdraw);
+                    
+                    Console.Clear();
+                    
+                    Console.WriteLine(withdraw.IsFaulted
+                        ? "Can't do that here bud"
+                        :$"Balance after withdrawal {account.Balance} kr");
                 }
 
                 Console.Read();
             }
-            catch (Exception ex)
+            catch (OverdraftException ex)
             {
-                if (ex.Message != "CancelledAccountSearch" && !(ex is OverdraftException))
-                {
-                    throw ex;
-                }
-
-                if (ex is OverdraftException)
-                {
-                    Console.Clear();
-                    Console.WriteLine(ex.Message);
-                    Console.ReadKey();
-                }
+                Console.Clear();
+                Console.WriteLine(ex.Message);
+                Console.ReadKey();
+            }
+            catch (CancelledAccountSearchException ex)
+            {
+                return;
             }
         }
 
-        static void TransactFunds()
+        
+        /// <summary>
+        /// Initiate transaction of funds
+        /// </summary>
+        /// <returns>Task</returns>
+        static async Task TransactFunds()
         {
             try
             {
                 Console.WriteLine("Sender account");
-                var sender = _GetUser();
-                
-                Console.WriteLine("Reciever account");
-                var reciever = _GetUser();
-                
+                var sender = await _GetUser();
+
+                Console.WriteLine("Recipient account");
+                var recipient = await _GetUser();
+
                 Console.Write("Amount to transact: ");
                 decimal.TryParse(Console.ReadLine(), out decimal amount);
+
                 Console.Clear();
 
                 if (amount == 0)
@@ -217,28 +265,45 @@ namespace TheBank.ConsoleGUI
                 }
                 else
                 {
-                    _bank.Transact(sender, reciever, amount);
-                    Console.WriteLine($"Balance after transaction {sender.Balance:0.00} kr");
+                    var oldBalance = sender.Balance;
+                    
+                    var transaction = _bank.Transact(sender, recipient, amount);
+
+                    _loading(transaction);
+
+                    Console.Clear();
+
+                    if (transaction.IsFaulted)
+                    {
+                        Console.WriteLine("Can't do that here bud");
+                    }
+                    else
+                    {
+                        Console.WriteLine("New Transaction");
+                        Console.WriteLine("---------------");
+                        Console.WriteLine($"Old Balance: \t{oldBalance:0.00}");
+                        Console.WriteLine($"New Balance: \t{sender.Balance:0.00}");
+                        Console.WriteLine($"Process Fee: \t{(amount * sender.TransactionFee):0.00}");
+                    }
                 }
 
                 Console.Read();
             }
-            catch (Exception ex)
+            catch (OverdraftException ex)
             {
-                if (ex.Message != "CancelledAccountSearch" && !(ex is OverdraftException))
-                {
-                    throw ex;
-                }
-
-                if (ex is OverdraftException)
-                {
-                    Console.Clear();
-                    Console.WriteLine(ex.Message);
-                    Console.ReadKey();
-                }
+                Console.Clear();
+                Console.WriteLine(ex.Message);
+                Console.ReadKey();
+            }
+            catch (CancelledAccountSearchException ex)
+            {
+                return;
             }
         }
 
+        /// <summary>
+        /// Initiate interest charging sequence and view changes
+        /// </summary>
         static void ChargeInterests()
         {
             if (_bank.AccountsCount > 0)
@@ -248,19 +313,33 @@ namespace TheBank.ConsoleGUI
                 var table = new DataTable();
 
                 table.Columns.Add("ID", typeof(string));
+                table.Columns.Add("ThreadID", typeof(string));
                 table.Columns.Add("Old Balance", typeof(string));
                 table.Columns.Add("New Balance", typeof(string));
                 table.Columns.Add("Differential", typeof(string));
                 table.Columns.Add("Interest", typeof(string));
-            
-            
-                _bank.Accounts.ForEach(account =>
+                
+                var tasks = new List<Task>();
+
+                _bank.Accounts.OrderBy(x => x.Id).ToList().ForEach(account =>
                 {
-                    var oldBalance = account.Balance;
-                    _bank.ChargeInterest(account);
-                    var newBalance = account.Balance;
-                    table.Rows.Add(account.Id, $"{oldBalance} kr", $"{newBalance} kr", $"{oldBalance - newBalance} kr", $"{account.InterestRate * 100} %");
+                    var task = new Task(() =>
+                    {
+                        var oldBalance = account.Balance;
+
+                        _bank.ChargeInterest(account);
+
+                        var newBalance = account.Balance;
+
+                        table.Rows.Add(account.Id.Substring(0, 8), Thread.CurrentThread.ManagedThreadId, $"{oldBalance} DKK", $"{newBalance} DKK", $"{oldBalance - newBalance} DKK", $"{account.InterestRate * 100} %");
+                    });
+                    
+                    task.Start();
+                    
+                    tasks.Add(task);
                 });
+
+                Task.WaitAll(tasks.ToArray());
 
                 ConsoleTableBuilder.From(table).WithFormat(ConsoleTableBuilderFormat.Minimal).ExportAndWriteLine();
             }
@@ -272,24 +351,27 @@ namespace TheBank.ConsoleGUI
             Console.Read();
         }
 
-        static void DisplayBalance()
+        /// <summary>
+        /// Initiate balance view
+        /// </summary>
+        static async Task DisplayBalance()
         {
             try
             {
-                var account = _GetUser();
-            
+                var account = await _GetUser();
+                
                 Console.WriteLine($"Balance: {account.Balance} kr");
                 Console.Read();
-            }
-            catch (Exception ex)
+            } 
+            catch (CancelledAccountSearchException ex)
             {
-                if (ex.Message != "CancelledAccountSearch")
-                {
-                    throw ex;
-                }
+                return;
             }
         }
 
+        /// <summary>
+        /// Initiate overview of accounts
+        /// </summary>
         static void DisplayAccounts()
         {
             Console.Clear();
@@ -308,7 +390,7 @@ namespace TheBank.ConsoleGUI
             
                 _bank.Accounts.ForEach(account =>
                 {
-                    table.Rows.Add(account.Id, account.Name, $"{account.Balance} kr", account.Type.ToString());
+                    table.Rows.Add(account.Id.Substring(0, 8), account.Name, $"{account.Balance} kr", account.Type.ToString());
                 });
 
                 ConsoleTableBuilder.From(table).WithFormat(ConsoleTableBuilderFormat.Minimal).ExportAndWriteLine();
@@ -321,6 +403,9 @@ namespace TheBank.ConsoleGUI
             Console.Read();
         }
 
+        /// <summary>
+        /// Initiate overview of logs
+        /// </summary>
         static void DisplayLogs()
         {
             var logs = LoggerService.Read();
@@ -329,6 +414,9 @@ namespace TheBank.ConsoleGUI
             Console.ReadKey();
         }
 
+        /// <summary>
+        /// Initiate overview of transactions
+        /// </summary>
         static void DisplayTransactions()
         {
             Console.Clear();
@@ -341,13 +429,13 @@ namespace TheBank.ConsoleGUI
 
                 table.Columns.Add("ID", typeof(string));
                 table.Columns.Add("Sender", typeof(string));
-                table.Columns.Add("Reciever", typeof(string));
+                table.Columns.Add("Recipient", typeof(string));
                 table.Columns.Add("Amount", typeof(string));
             
             
                 _bank.Transactions.ForEach(transaction =>
                 {
-                    table.Rows.Add(transaction.Id.Substring(0, 12), transaction.Sender?.Id ?? "null", transaction.Reciever?.Id ?? "null", transaction.Amount.ToString("0.00"));
+                    table.Rows.Add(transaction.Id.Substring(0, 8), transaction.Sender?.Id.Substring(0, 8) ?? "null", transaction.Recipient?.Id.Substring(0, 8) ?? "null", transaction.Amount.ToString("0.00"));
                 });
 
                 ConsoleTableBuilder.From(table).WithFormat(ConsoleTableBuilderFormat.Minimal).ExportAndWriteLine();
@@ -360,31 +448,83 @@ namespace TheBank.ConsoleGUI
             Console.Read();
         }
         
-        //#region private methods
+        #region private methods
 
-        static Account _GetUser()
+        /// <summary>
+        /// Initiate account search sequence
+        /// </summary>
+        /// <returns>Account</returns>
+        /// <exception cref="CancelledAccountSearchException">Used to handle cancellation of account search</exception>
+        private static async Task<Account> _GetUser()
         {
             Console.Write("AccountID: ");
             var userInput = Console.ReadLine();
-            
+        
             if (string.IsNullOrEmpty(userInput))
             {
-                throw new Exception("CancelledAccountSearch");    
+                throw new CancelledAccountSearchException("CancelledAccountSearch");    
             }
-            
-            var account = _bank.GetAccount(userInput);
 
-            if (account == null)
+            try
+            {
+                var account = await _bank.GetAccount(userInput);
+                Console.Clear();
+                return account;
+            }
+            catch
             {
                 Console.Clear();
                 Console.WriteLine("That ID doesn't exists");
-                return _GetUser();
+                var account = await _GetUser();
+                return account;
             }
+        }
 
-            Console.Clear();
-            return account;
+        /// <summary>
+        /// Initiate loading sequence
+        /// </summary>
+        /// <param name="task">Task to wait for</param>
+        private static void _loading(Task task)
+        {
+            try
+            {
+                int i = 5;
+                bool completed = false;
+                
+                while (!completed)
+                {
+                    Console.SetCursorPosition(0, 0);
+                    Console.Write($"{Math.Abs(i / (Console.WindowWidth - 1))}%");
+                
+                    Console.SetCursorPosition(4, 0);
+                    Console.Write("[");
+                
+                    Console.SetCursorPosition(Console.WindowWidth, 0);
+                    Console.Write("]");
+
+                    Console.SetCursorPosition(i, 0);
+                    Console.Write("█");
+                    Thread.Sleep(10);
+
+                    i++;
+
+                    if (task.IsCompleted)
+                    {
+                        Thread.Sleep(new Random().Next(1, Math.Abs(500 / i)));
+                        if (i >= Console.WindowWidth) completed = true;
+                    }
+                    else
+                    {
+                        Thread.Sleep(new Random().Next(175, 500));
+                    }
+                }
+            }
+            catch
+            {
+                return;
+            }
         }
         
-        // #endregion
+        #endregion
     }
 }

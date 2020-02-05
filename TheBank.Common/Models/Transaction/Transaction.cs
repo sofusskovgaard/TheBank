@@ -8,7 +8,7 @@ namespace TheBank.Common.Models.Transaction
 
         public Account Sender { get; set; }
         
-        public Account Reciever { get; set; }
+        public Account Recipient { get; set; }
         
         public decimal Amount { get; set; }
     }
@@ -19,7 +19,7 @@ namespace TheBank.Common.Models.Transaction
 
         Account Sender { get; set; }
         
-        Account Reciever { get; set; }
+        Account Recipient { get; set; }
         
         decimal Amount { get; set; }
     }

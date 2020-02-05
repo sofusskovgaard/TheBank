@@ -17,7 +17,7 @@ namespace TheBank.Common.Models.Accounts
         
         protected Account(string id = null, string name = "John Doe")
         {
-            Id = id ?? Guid.NewGuid().ToString().Substring(0, 6);
+            Id = id ?? Guid.NewGuid().ToString();
             Name = name;
         }
         
@@ -34,50 +34,63 @@ namespace TheBank.Common.Models.Accounts
             {
                 if (value < 0 && _balance > 0 && value > NegativeCeiling)
                 {
+                    // If balance goes negative after being positive
                     _balance = value;
                     throw new OverdraftException($"You've overdrafted and you're now in a debt of {Math.Round(value, 2):0.00} kr");
                 }
                 
                 if (value < 0 && _balance < 0 && value < _balance && value > NegativeCeiling)
                 {
+                    // If balance goes more negative
                     _balance = value;
                     throw new OverdraftException($"You've overdrafted again and you're now in a debt of {Math.Round(value, 2):0.00} kr");
                 } 
                 
                 if (value < 0 && _balance < 0 && value > _balance && value > NegativeCeiling)
                 {
+                    // If balance goes less negative, but is still negative
                     _balance = value;
                     throw new OverdraftException($"You're paying off your debt, but you're still in a debt of {Math.Round(value, 2):0.00} kr");
                 }
 
                 if (value < NegativeCeiling)
                 {
+                    // If future balance is more negative than the specified ceiling
                     if (_balance > 0)
                     {
+                        // If balance tries to go over the ceiling and is positive
                         throw new OverdraftException($"You've reached your overdraft ceiling of {NegativeCeiling:0.00} kr. Your balance is {Math.Round(_balance, 2):0.00} kr");
                     }
+                    // If balance tries to go over the ceiling and is negative
                     throw new OverdraftException($"You've reached your overdraft ceiling of {NegativeCeiling:0.00} kr. You're currently in a debt of {Math.Round(_balance, 2):0.00} kr");
                 }
-
+                
                 _balance = value;
             }
         }
-
-        // Abstract variables/methods
-        public abstract decimal TransactionFee { get; }
         
-        public abstract decimal InterestRate { get; }
-        
-        public abstract decimal NegativeCeiling { get; }
-
+        /// <summary>
+        /// Charge interest on this account
+        /// </summary>
+        /// <returns>decimal</returns>
         public decimal ChargeInterest()
         {
             var oldBalance = _balance;
             var interest = _balance * InterestRate;
             
             _balance += interest;
-            LoggerService.Write($"[INTERESTS][BALANCE: {oldBalance} => {_balance}] CHARGE INTEREST FROM ACCOUNT => {Id}");
+            LoggerService.Write($"[INTERESTS][BALANCE: {oldBalance:0.00} => {_balance:0.00}] CHARGE INTEREST FROM ACCOUNT => {Id}");
             return interest;
         }
+
+        #region Abstract Variables
+
+        public abstract decimal TransactionFee { get; }
+        
+        public abstract decimal InterestRate { get; }
+        
+        public abstract decimal NegativeCeiling { get; }
+        
+        #endregion
     }
 }
